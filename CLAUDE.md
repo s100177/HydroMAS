@@ -125,3 +125,77 @@ tank_params = get_default_tank_params()  # {"area": 1.0, "cd": 0.6, ...}
 - Ray for distributed computing
 - FastMCP for tool protocol
 - pytest + pytest-asyncio for testing
+
+## Multi-Agent Development Pipeline
+
+This project uses a two-engine autonomous development system.
+
+### Architecture
+
+```
+OpenClaw (Coordination Layer — always running)        Claude Code (Execution Layer — invoked on demand)
+────────────────────────────────────────              ──────────────────────────────────────────────────
+PM Agent (Opus 4.6)                                   .claude/agents/
+  └─ sessions_send ──► Architect Agent (Sonnet)         ├── explore.md    [Haiku  — file discovery]
+  └─ sessions_send ──► Reviewer Agent  (Sonnet)         ├── architect.md  [Sonnet — design review]
+  └─ claude-coder skill ─────────────────────────────►  ├── reviewer.md   [Sonnet — bug detection]
+                                                         ├── coder.md     [Sonnet — implementation]
+                                                         └── tester.md    [Haiku  — test validation]
+```
+
+### How to Trigger a Development Task
+
+Send a message to OpenClaw PM agent (via Telegram/Discord/WebChat):
+
+```
+"Add unit tests for the scheduling module"
+"Fix the bug in core/simulation where negative water level is allowed"
+"Refactor core/control/pid.py to separate gain calculation from control output"
+```
+
+### What Happens Internally
+
+```
+1. PM Agent receives request
+2. PM → Architect: "Review this task scope"          (sessions_send, parallel)
+3. PM → Reviewer:  "Check current code quality"      (sessions_send, parallel)
+4. PM invokes claude-coder skill → exec: claude CLI
+5. Claude Code spawns internal agents in parallel:
+     Task ▶ explore   → maps affected files
+     Task ▶ coder     → implements changes
+     Task ▶ tester    → validates with pytest
+6. Results flow back through skill → PM Agent
+7. PM reports to user: branch created, N files changed, tests passing
+```
+
+### Setup (one-time)
+
+```bash
+# 1. Install Claude Code CLI
+npm install -g @anthropic-ai/claude-code
+
+# 2. Copy OpenClaw config
+cp openclaw-setup/openclaw.json ~/.openclaw/openclaw.json
+# Edit: add your ANTHROPIC_API_KEY and messaging channel token
+
+# 3. Copy OpenClaw agent definitions
+cp openclaw-setup/AGENTS.md ~/.openclaw/workspace/AGENTS.md
+
+# 4. Install OpenClaw skills
+cp -r openclaw-setup/skills/claude-coder ~/.openclaw/workspace/skills/
+cp -r openclaw-setup/skills/git-reporter ~/.openclaw/workspace/skills/
+
+# 5. Start OpenClaw Gateway
+openclaw start
+```
+
+### Agent Responsibilities
+
+| Agent | Layer | Model | Writes Code? | Role |
+|-------|-------|-------|-------------|------|
+| PM | OpenClaw | Opus 4.6 | No | User interface, task coordination |
+| Architect | OpenClaw | Sonnet 4.6 | No | Design review, risk assessment |
+| Reviewer | OpenClaw | Sonnet 4.6 | No | Code quality gate |
+| explore | Claude Code | Haiku | No | File discovery |
+| coder | Claude Code | Sonnet 4.6 | **Yes** | Implementation |
+| tester | Claude Code | Haiku | Tests only | Validation |

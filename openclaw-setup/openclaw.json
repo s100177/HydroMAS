@@ -1,0 +1,105 @@
+{
+  // ============================================================
+  // OpenClaw Multi-Agent Development Configuration
+  // Copy this file to: ~/.openclaw/openclaw.json
+  // Replace all <PLACEHOLDER> values before starting Gateway
+  // ============================================================
+
+  "gateway": {
+    "port": 18789,
+    "logging": { "level": "info" }
+  },
+
+  "providers": {
+    "anthropic": {
+      // Get from: https://console.anthropic.com/settings/keys
+      "apiKey": "<YOUR_ANTHROPIC_API_KEY>"
+    }
+  },
+
+  // ---- Messaging Channels (enable at least one) ----
+  "channels": {
+    // Option A: Telegram (recommended — fast, reliable)
+    "telegram": {
+      "enabled": false,
+      "token": "<YOUR_TELEGRAM_BOT_TOKEN>"
+      // Create bot: message @BotFather on Telegram → /newbot
+    },
+
+    // Option B: Discord
+    "discord": {
+      "enabled": false,
+      "token": "<YOUR_DISCORD_BOT_TOKEN>"
+    },
+
+    // Option C: Web chat (no setup required, localhost only)
+    "webchat": {
+      "enabled": true
+    }
+  },
+
+  "skills": {
+    "clawhub": { "enabled": true },
+    "install": { "nodeManager": "npm" }
+  },
+
+  "agents": {
+    "defaults": {
+      "model": "claude-opus-4-6",
+      "workspace": "~/.openclaw/workspace",
+      "tools": {
+        "exec": {
+          "enabled": true,
+          // Require user approval for shell commands (recommended)
+          "approval": "always"
+        },
+        "read":  { "enabled": true },
+        "write": { "enabled": true },
+        "elevated": { "enabled": false }
+      }
+    },
+
+    "list": [
+      // ---- PM Agent: main orchestrator, talks to user ----
+      {
+        "id": "main",
+        "default": true,
+        "model": "claude-opus-4-6",
+        "identity": {
+          "name": "PM",
+          "emoji": "🎯"
+        }
+      },
+
+      // ---- Architect Agent: design review ----
+      {
+        "id": "architect",
+        "model": "claude-sonnet-4-6",
+        "identity": {
+          "name": "Architect",
+          "emoji": "🏗️"
+        },
+        "tools": {
+          "exec": { "enabled": false },
+          "read": { "enabled": true },
+          "write": { "enabled": false }
+        }
+      },
+
+      // ---- Reviewer Agent: code quality gate ----
+      {
+        "id": "reviewer",
+        "model": "claude-sonnet-4-6",
+        "identity": {
+          "name": "Reviewer",
+          "emoji": "🔍"
+        },
+        "tools": {
+          "exec": { "enabled": false },
+          "read": { "enabled": true },
+          "write": { "enabled": false }
+        }
+      }
+    ]
+  }
+}
