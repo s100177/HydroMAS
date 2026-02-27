@@ -71,6 +71,21 @@
         }
       },
 
+      // ---- Planner Agent: requirements → task DAG ----
+      {
+        "id": "planner",
+        "model": "claude-sonnet-4-6",
+        "identity": {
+          "name": "Planner",
+          "emoji": "📋"
+        },
+        "tools": {
+          "exec": { "enabled": false },
+          "read": { "enabled": true },
+          "write": { "enabled": false }
+        }
+      },
+
       // ---- Architect Agent: design review ----
       {
         "id": "architect",
